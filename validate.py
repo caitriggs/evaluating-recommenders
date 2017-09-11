@@ -26,19 +26,24 @@ from recommender import *
 from metrics import get_ndcg_2
 from relevances import *
 
+from pyspark.sql import SparkSession
+from pyspark.ml.recommendation import ALSModel
+# Setup a SparkSession
+spark = SparkSession.builder.getOrCreate()
+
 #
 
 try:
 	input_file = sys.argv[1]
 except IndexError:
 	input_file = '/path/to/your/input/file'
-		
+
 try:
 	output_file = sys.argv[2]
 	print "saving calculated NDCGs to ", output_file
 except IndexError:
 	output_file = 'ndcgs/output.pkl'
-	
+
 #
 
 # relevance score = rating - relevance_bias
@@ -52,54 +57,56 @@ max_train_size = 200	# L
 
 ###
 
-def validate( ratings ):
-	#print "all:", ratings.keys()	
-	
+def validate( ratings, user ):
+	#print "all:", ratings.keys()
+
 	global ndcgs
-	
+
 	user_ndcgs = []
-	
+
 	# this is L for a user
 	max_split_i = min( max_train_size, len( ratings ) - min_items_for_ndcg + 1 )
 	print " ", max_split_i
-	
+
 	# ratings in random order
 	tmp = ratings.items()
 	shuffle( tmp )
 	ratings = OrderedDict( tmp )
-	
-	for split_i in range( 1, max_split_i ):	
+
+	for split_i in range( 1, max_split_i ):
 		train = ratings.keys()[:split_i]
 		test = ratings.keys()[split_i:]
-		
+
 		# a recommender gets some ratings and returns a list of recommended get_ranked_ids
 		# the length of the list is ndcg_k + len( train )
 		# in case the recommender returns items from the train set
-		ranked_ids = rec.get_ranked_ids( train, ndcg_k + len( train ))
+		ranked_ids = rec.get_ranked_ids( train, user, ndcg_k + len( train ))
 		
 		# recommender might return ids in train - filter them out
 		ranked_ids = [ x for x in ranked_ids if x not in train ]
 		ranked_ids = ranked_ids[:ndcg_k]
-		
-		relevances = get_relevances( ratings, ranked_ids )	
+
+		relevances = get_relevances( ratings, ranked_ids )
 		best_relevances = get_best_relevances( ratings, test, ndcg_k )
 
-		# when given None as worst_relevances, 
+		# when given None as worst_relevances,
 		# get_ndcg_2() will assume that the worst possible DCG is zero
 		worst_relevances = None
-		
+
 		ndcg = get_ndcg_2( relevances, best_relevances, worst_relevances, ndcg_k )
-		
+
 		# nans when all ratings in test are the same, e.g. (2, 2, 2)
 		if not np.isnan( ndcg ):
 			ndcgs[split_i].append( ndcg )
-	
+
 #
 
 ndcgs = defaultdict( list )
 
 reader = csv.reader( open( input_file, 'rb' ))
-rec = Rec()
+#
+rec_model = ALSModel.load("/home/ubuntu/PROJECT/github-collaborator/data/models/ALSmodel")
+rec = Rec(rec_model)
 
 print "start:", time.strftime("%H:%M:%S", time.localtime())
 start_time = time.time()
@@ -124,29 +131,29 @@ user_counter = 1
 for line in reader:
 	user = line[0]
 	movie = int( line[1] )
-	rating = float( line[2] )	
-	
+	rating = float( line[2] )
+
 	if user == current_user:
 		current_ratings[movie] = rating
 	else:
-		
+
 		if len( current_ratings ) >= min_items_for_ndcg + 1:
-			validate( current_ratings )
-		
+			validate( current_ratings, current_user )
+
 		# init new user
 		current_ratings = OrderedDict()
 		current_ratings[movie] = rating
 		current_user = user
 		user_counter += 1
-		
+
 	counter += 1
 	if counter % 1000 == 0:
 		print counter, user_counter
-		
+
 # the last user
 if len( current_ratings ) >= min_items_for_ndcg + 1:
-	validate( current_ratings )
-	
+	validate( current_ratings, current_user )
+
 #
 
 print "end:", time.strftime("%H:%M:%S", time.localtime())
@@ -156,24 +163,19 @@ duration = end_time - start_time
 duration_minutes = int( duration ) / 60
 duration_seconds = int( duration ) % 60
 print "validation took {} minutes, {} seconds.".format( duration_minutes, duration_seconds )
-	
+
 if output_file:
 	pickle.dump( { 'ndcgs': ndcgs }, open( output_file, 'wb' ))
-	
+
 # plot
 
 mean_ndcgs = OrderedDict( { k: sum( v ) / len( v ) for k, v in ndcgs.items() if len( v ) >= min_users } )
 for k, v in mean_ndcgs.items()[:20]:
 	print k, v
-	
+
 plt.plot( mean_ndcgs.keys(), mean_ndcgs.values())
 
 axes = plt.gca()
 axes.set_ylim([0,0.5])
 
 plt.show()
-	
-
-	
-
-	
