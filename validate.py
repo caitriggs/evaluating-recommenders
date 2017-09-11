@@ -36,7 +36,7 @@ spark = SparkSession.builder.getOrCreate()
 try:
 	input_file = sys.argv[1]
 except IndexError:
-	input_file = '/path/to/your/input/file'
+	input_file = '/home/ubuntu/PROJECT/github-collaborator/data/new_subset_data/own_and_star.csv'
 
 try:
 	output_file = sys.argv[2]
@@ -81,7 +81,7 @@ def validate( ratings, user ):
 		# the length of the list is ndcg_k + len( train )
 		# in case the recommender returns items from the train set
 		ranked_ids = rec.get_ranked_ids( train, user, ndcg_k + len( train ))
-		
+
 		# recommender might return ids in train - filter them out
 		ranked_ids = [ x for x in ranked_ids if x not in train ]
 		ranked_ids = ranked_ids[:ndcg_k]
