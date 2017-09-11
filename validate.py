@@ -21,6 +21,7 @@ import cPickle as pickle
 from collections import OrderedDict, defaultdict
 from matplotlib import pyplot as plt
 from random import shuffle
+import numpy as np
 
 from recommender import *
 from metrics import get_ndcg_2
