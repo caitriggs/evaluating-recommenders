@@ -117,7 +117,7 @@ reader.next()
 # first line
 
 line = reader.next()
-user = line[0]
+user = int( line[0] )
 movie = int( line[1] )
 rating = float( line[2] )
 
@@ -129,7 +129,7 @@ counter = 0
 user_counter = 1
 
 for line in reader:
-	user = line[0]
+	user = int( line[0] )
 	movie = int( line[1] )
 	rating = float( line[2] )
 
