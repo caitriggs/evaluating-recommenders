@@ -1,4 +1,8 @@
 
+# relevance score = rating - relevance_bias
+# e.g. 1...5 -> -2...2
+relevance_bias = 2.0
+
 # return a list of relevances for supplied ids, given a dictionary of ratings
 # unrated items get a score of zero
 def get_relevances( ratings, ids ):
