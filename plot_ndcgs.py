@@ -16,22 +16,22 @@ input_dir = 'ndcgs/'
 input_files = [ join( input_dir, f ) for f in listdir( input_dir ) if isfile( join( input_dir, f )) and f.endswith( '.pkl' ) ]
 
 for i_f in input_files:
-	print i_f
-	
+    print i_f
+
 #
 
 ndcgs = [ pickle.load( open( i_f, 'rb' ))['ndcgs'] for i_f in input_files ]
 
 for i in range( len( ndcgs )):
-	assert( sorted( ndcgs[i].keys()) == ndcgs[i].keys())
+    assert( sorted( ndcgs[i].keys()) == ndcgs[i].keys())
 
-mean_ndcgs = [ 
-	OrderedDict( { k: sum( v ) / len( v ) for k, v in x.items() if len( v ) >= min_users } ) 
-	for x in ndcgs ]
+mean_ndcgs = [
+    OrderedDict( { k: sum( v ) / len( v ) for k, v in x.items() if len( v ) >= min_users } )
+    for x in ndcgs ]
 
 colors = [ 'g', 'b', 'r', 'k', 'y' ]
 
 for i, n in enumerate( mean_ndcgs ):
-	plt.plot( n.keys(), n.values(), colors[i] )
+    plt.plot( n.keys(), n.values(), colors[i] )
 
 plt.show()

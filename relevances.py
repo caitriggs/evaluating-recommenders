@@ -4,14 +4,15 @@
 def get_relevances( ratings, ids ):
     global relevance_bias
 
-	r = [ 0. ] * len( ids )
-	for i, x in enumerate( ids ):
-		try:
-			r[i] = ratings[x] - relevance_bias
-		except KeyError:
-			pass
+    r = [ 0. ] * len( ids )
 
-	return r
+    for i, x in enumerate( ids ):
+        try:
+            r[i] = ratings[x] - relevance_bias
+        except KeyError:
+            pass
+
+    return r
 
 
 # returns unsorted best possible relevances from the test set
@@ -19,19 +20,19 @@ def get_relevances( ratings, ids ):
 def get_best_relevances( ratings, ids, ndcg_k ):
     global relevance_bias
 
-	r = [ ratings[x] - relevance_bias for x in ids if x in ratings and ratings[x] > relevance_bias ]
+    r = [ ratings[x] - relevance_bias for x in ids if x in ratings and ratings[x] > relevance_bias ]
 
-	if len( r ) < ndcg_k:
-		return r + [ 0. ] * ( ndcg_k - len( r ))
-	else:
-		return r
+    if len( r ) < ndcg_k:
+        return r + [ 0. ] * ( ndcg_k - len( r ))
+    else:
+        return r
 
 
 def get_worst_relevances( ratings, ids, ndcg_k ):
     global relevance_bias
 
-	r = [ ratings[x] - relevance_bias for x in ids if x in ratings and ratings[x] < relevance_bias ]
-	if len( r ) < ndcg_k:
-		return r + [ 0. ] * ( ndcg_k - len( r ))
-	else:
-		return r
+    r = [ ratings[x] - relevance_bias for x in ids if x in ratings and ratings[x] < relevance_bias ]
+    if len( r ) < ndcg_k:
+        return r + [ 0. ] * ( ndcg_k - len( r ))
+    else:
+        return r
